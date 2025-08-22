@@ -1,6 +1,13 @@
 package iso8583
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	ErrCreatingNewPackager = fmt.Errorf("error creating new packager")
+)
 
 var (
 	ErrNotIsoMessage               = errors.New("not iso message")
@@ -14,4 +21,9 @@ var (
 	ErrNoMtiToPack                 = errors.New("no mti to pack")
 	ErrNotDefaultMti               = errors.New("not default mti to pack")
 	ErrInvalidPackager             = errors.New("invalid packager value")
+)
+
+var (
+	ErrInvalidBitType = errors.New("invalid bit type")
+	ErrInvalidBitMap  = errors.New("invalid bitmap")
 )
