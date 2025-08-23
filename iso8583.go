@@ -103,22 +103,6 @@ func (m *Message) GetMessageKey() string {
 	return result
 }
 
-// CreateReturnISO to create Message Error
-// TODO : MODIFY TO MAKE IT MORE PROPER
-//func (m *Message) CreateReturnISO(i Message, RC string) (Message, error) {
-//	// create msg
-//	err := m.SetMTIResponse()
-//	if err != nil {
-//		return i, err
-//	}
-//	i.[39] = RC
-//	err = i.PackISO()
-//	if err != nil {
-//		return i, err
-//	}
-//	return i, nil
-//}
-
 func (m *Message) GetMTIResponse() (mti MTITypeByte, err error) {
 	switch {
 	case m.MTI.Equal(MTICardProcessingRequestByte):
@@ -198,4 +182,24 @@ func (m *Message) IsResponse() bool {
 	default:
 		return false
 	}
+}
+
+// CreateResponseISO create response ISO Message
+func CreateResponseISO(i Message, rc string) ([]byte, error) {
+	// create msg
+	msg := NewMessage(i.packager)
+	msg.MTI = i.MTI
+	for bit, v := range i.isoMessageMap {
+		msg.SetByte(bit, v)
+	}
+	err := msg.SetMTIResponse()
+	if err != nil {
+		return nil, err
+	}
+	msg.SetString(39, rc)
+	result, err := i.PackISO()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
