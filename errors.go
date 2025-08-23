@@ -2,11 +2,10 @@ package iso8583
 
 import (
 	"errors"
-	"fmt"
 )
 
 var (
-	ErrCreatingNewPackager = fmt.Errorf("error creating new packager")
+	ErrCreatingNewPackager = errors.New("error creating new packager")
 )
 
 var (

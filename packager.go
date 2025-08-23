@@ -24,8 +24,7 @@ type BitConfig struct {
 	Length      BitLength `json:"length"`
 }
 
-func NewPackager(r io.ReadCloser) (*IsoPackager, error) {
-	defer r.Close()
+func NewPackager(r io.Reader) (*IsoPackager, error) {
 	buffer, err := io.ReadAll(r)
 	if err != nil {
 		return nil, errors.Join(err, ErrCreatingNewPackager)

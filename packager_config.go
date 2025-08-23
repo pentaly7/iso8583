@@ -7,7 +7,7 @@ import (
 )
 
 type BitLength struct {
-	Type LengthType `json:"mode"` // "FIXED", "LLVAR", "LLLVAR", "LLLLVAR"
+	Type LengthType `json:"type"` // "FIXED", "LLVAR", "LLLVAR", "LLLLVAR"
 	Max  int        `json:"max"`  // max length (or exact length if FIXED)
 }
 
