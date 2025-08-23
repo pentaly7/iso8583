@@ -2,7 +2,6 @@ package iso8583
 
 import (
 	"bytes"
-	"encoding/hex"
 )
 
 type (
@@ -46,6 +45,11 @@ func (m *Message) GetByte(bit int) []byte {
 	return m.isoMessageMap[bit]
 }
 
+func (m *Message) HasBit(bit int) bool {
+	_, ok := m.isoMessageMap[bit]
+	return ok
+}
+
 // Unpack to Single Data Element
 func (m *Message) Unpack(b []byte) error {
 	m.byteData = b
@@ -87,19 +91,11 @@ func (m *Message) Unpack(b []byte) error {
 		return ErrInsufficientDataFirstBitmap
 	}
 
-	asciiHex := data[m.cursor : m.cursor+16]
-	bitmap, err := hex.DecodeString(string(asciiHex))
-	if err != nil {
-		return ErrInvalidBitMap
-	}
-	m.firstBitmap = bitmap
-	m.cursor += 16
-
 	if m.isoMessageMap == nil {
 		m.isoMessageMap = make(map[int][]byte)
 	}
 
-	if err := m.parseBitmap(bitmap); err != nil {
+	if err := m.parseBitmap(); err != nil {
 		return err
 	}
 

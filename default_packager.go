@@ -60,7 +60,7 @@ func DefaultPackager() *IsoPackager {
 			52:  NewBitConfigFixed(false, BitTypeANS, 16),
 			53:  NewBitConfigFixed(false, BitTypeANS, 16),
 			54:  NewBitConfigLLLVar(false, BitTypeANS, 999),
-			55:  NewBitConfigLLLVar(false, BitTypeB, 999),
+			55:  NewBitConfigLLLVar(false, BitTypeANS, 999),
 			56:  NewBitConfigLLLVar(false, BitTypeANS, 999),
 			57:  NewBitConfigLLLVar(false, BitTypeANS, 999),
 			58:  NewBitConfigLLLVar(false, BitTypeANS, 999),

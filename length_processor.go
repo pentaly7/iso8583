@@ -9,7 +9,7 @@ func (m *Message) parseBitLength(bitNum int) (length int, err error) {
 
 	packager, ok := m.packager.IsoPackagerConfig[bitNum]
 	if !ok {
-		return 0, fmt.Errorf("packager not found for bit %d", bitNum)
+		return -1, fmt.Errorf("packager not found for bit %d", bitNum)
 	}
 
 	prefixLen := packager.Length.Type.GetPrefixLen()

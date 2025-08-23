@@ -3,19 +3,33 @@ package iso8583
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 )
 
-func (m *Message) parseBitmap(bitmap []byte) (err error) {
+func (m *Message) parseBitmap() (err error) {
 	startBit := 0
+	var bitmap []byte
+	var asciiHex []byte
+
+	if m.firstBitmap == nil {
+		asciiHex = m.byteData[m.cursor : m.cursor+16]
+		bitmap, err = hex.DecodeString(string(asciiHex))
+		if err != nil {
+			return ErrInvalidBitMap
+		}
+		m.firstBitmap = bitmap
+		m.cursor += 16
+	}
 	if m.hasSecondBitmap {
+		bitmap = m.secondBitmap
 		startBit = 64
 	}
 
 	totalBits := len(bitmap) * 8
 
-	for i := startBit; i < totalBits; i++ {
+	for i := 0; i < totalBits; i++ {
 
 		// Find which byte and which bit
 		byteIndex := i / 8
@@ -25,10 +39,14 @@ func (m *Message) parseBitmap(bitmap []byte) (err error) {
 			continue
 		}
 
-		bitNum := i + 1
+		bitNum := i + 1 + startBit
 		m.activeBit = append(m.activeBit, bitNum)
 		if bitNum == 1 {
-			m.secondBitmap = m.byteData[m.cursor : m.cursor+16]
+			asciiHex = m.byteData[m.cursor : m.cursor+16]
+			m.secondBitmap, err = hex.DecodeString(string(asciiHex))
+			if err != nil {
+				return ErrInvalidBitMap
+			}
 			m.cursor += 16
 			continue
 		}
@@ -40,7 +58,7 @@ func (m *Message) parseBitmap(bitmap []byte) (err error) {
 			return err
 		}
 
-		if length <= 0 {
+		if length < 0 {
 			continue
 		}
 
@@ -57,7 +75,7 @@ func (m *Message) parseBitmap(bitmap []byte) (err error) {
 
 	if m.secondBitmap != nil && !m.hasSecondBitmap {
 		m.hasSecondBitmap = true
-		err := m.parseBitmap(m.secondBitmap)
+		err := m.parseBitmap()
 		return err
 	}
 
