@@ -1,12 +1,12 @@
-package emv
+package tlv
 
 import (
 	"encoding/hex"
 	"fmt"
 )
 
-type TLVData struct {
-	data []TagData
+type Data struct {
+	list []TagData
 }
 
 type TagData struct {
@@ -14,9 +14,9 @@ type TagData struct {
 	value []byte
 }
 
-func NewEMV(data []byte) (*TLVData, error) {
-	result := &TLVData{
-		data: make([]TagData, 0),
+func New(data []byte) (*Data, error) {
+	result := &Data{
+		list: make([]TagData, 0),
 	}
 
 	if data == nil {
@@ -80,7 +80,7 @@ func NewEMV(data []byte) (*TLVData, error) {
 		// Store in map (tag as string)
 		tagKey := bytesToUint32(tag)
 
-		result.data = append(result.data, TagData{
+		result.list = append(result.list, TagData{
 			tag:   tagKey,
 			value: value,
 		})
@@ -89,8 +89,8 @@ func NewEMV(data []byte) (*TLVData, error) {
 	return result, nil
 }
 
-func (t *TLVData) HasTag(tag uint32) bool {
-	for _, k := range t.data {
+func (t *Data) HasTag(tag uint32) bool {
+	for _, k := range t.list {
 		if k.tag == tag {
 			return true
 		}
@@ -98,8 +98,8 @@ func (t *TLVData) HasTag(tag uint32) bool {
 	return false
 }
 
-func (t *TLVData) GetByte(tag uint32) []byte {
-	for _, k := range t.data {
+func (t *Data) GetByte(tag uint32) []byte {
+	for _, k := range t.list {
 		if k.tag == tag {
 			return k.value
 		}
@@ -107,7 +107,7 @@ func (t *TLVData) GetByte(tag uint32) []byte {
 	return nil
 }
 
-func (t *TLVData) GetInt64(tag uint32) int64 {
+func (t *Data) GetInt64(tag uint32) int64 {
 	b := t.GetByte(tag)
 	if b == nil {
 		return 0
@@ -119,26 +119,11 @@ func (t *TLVData) GetInt64(tag uint32) int64 {
 	return result
 }
 
-func (t *TLVData) GetHexString(tag uint32) string {
+func (t *Data) GetHexString(tag uint32) string {
 	b := t.GetByte(tag)
 	if b == nil {
 		return ""
 	}
 
 	return hex.EncodeToString(b)
-}
-
-func (t *TLVData) Pack() []byte {
-	if t.data == nil || len(t.data) == 0 {
-		return nil
-	}
-	result := make([]byte, 0)
-	for _, v := range t.data {
-		length := len(v.value)
-		result = append(result, uint32ToBytes(v.tag)...)
-		result = append(result, byte(length))
-		result = append(result, v.value...)
-	}
-
-	return result
 }

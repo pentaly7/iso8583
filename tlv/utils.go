@@ -1,4 +1,4 @@
-package emv
+package tlv
 
 func bytesToUint32(b []byte) uint32 {
 	var n uint32
