@@ -1,8 +1,6 @@
 package iso8583
 
-import (
-	"bytes"
-)
+import "fmt"
 
 type (
 	// Message for Component Message
@@ -36,6 +34,9 @@ func (m *Message) SetByte(bit int, value []byte) {
 func (m *Message) SetString(bit int, value string) {
 	m.isoMessageMap[bit] = []byte(value)
 }
+func (m *Message) SetMTI(value MTIType) {
+	m.MTI = []byte(value)
+}
 
 func (m *Message) GetString(bit int) string {
 	return string(m.isoMessageMap[bit])
@@ -50,53 +51,36 @@ func (m *Message) HasBit(bit int) bool {
 	return ok
 }
 
-// Unpack to Single Data Element
-func (m *Message) Unpack(b []byte) error {
-	m.byteData = b
-	m.cursor = 0
-
-	data := m.byteData
-	if len(data) < 4 {
-		return ErrInsufficientDataMti
-	}
-	// check ISO header
-	if m.packager.HasHeader || bytes.Equal(data[:3], isoHeader) {
-		m.header = data[:m.packager.HeaderLength]
-		m.cursor += m.packager.HeaderLength
-	}
-
-	if len(data[m.cursor:]) < 4 {
-		return ErrInsufficientDataMti
-	}
-
-	// check MTI
-	mti := MTITypeByte(data[0:4])
-	switch {
-	case mti.Equal(MTICardProcessingRequestByte),
-		mti.Equal(MTICardProcessingResponseByte),
-		mti.Equal(MTIFinancialRequestByte),
-		mti.Equal(MTIFinancialResponseByte),
-		mti.Equal(MTIReversalRequestByte),
-		mti.Equal(MTIReversalResponseByte),
-		mti.Equal(MTIRepeatedReversalRequestByte),
-		mti.Equal(MTINMMRequestByte),
-		mti.Equal(MTINMMResponseByte):
-		m.MTI = mti
-	default:
-		return ErrNotDefaultMti
-	}
-	m.cursor += 4
-
-	if len(data[m.cursor:]) < 16 {
-		return ErrInsufficientDataFirstBitmap
+// ValidateMessage validate ISO Message
+func (m *Message) ValidateMessage() error {
+	if m.MTI.Equal(MTINMMRequestByte) || m.MTI.Equal(MTINMMResponseByte) {
+		mandatoryBits := []int{7, 11, 70}
+		for _, bit := range mandatoryBits {
+			if _, ok := m.isoMessageMap[bit]; ok == false {
+				return fmt.Errorf("missing mandatory bit %d", bit)
+			}
+		}
+		if m.MTI.Equal(MTINMMRequestByte) {
+			return nil
+		}
+		if _, ok := m.isoMessageMap[39]; ok == false {
+			return fmt.Errorf("missing mandatory bit 39 for response")
+		}
+		return nil
 	}
 
-	if m.isoMessageMap == nil {
-		m.isoMessageMap = make(map[int][]byte)
+	for _, bit := range m.packager.MandatoryBit {
+		if _, ok := m.isoMessageMap[bit]; ok == false {
+			return fmt.Errorf("missing mandatory bit %d", bit)
+		}
 	}
 
-	if err := m.parseBitmap(); err != nil {
-		return err
+	if m.MTI.Equal(MTIReversalRequestByte) ||
+		m.MTI.Equal(MTIReversalResponseByte) ||
+		m.MTI.Equal(MTIRepeatedReversalRequestByte) {
+		if _, ok := m.isoMessageMap[90]; ok == false {
+			return fmt.Errorf("missing mandatory bit 90 for reversal")
+		}
 	}
 
 	return nil
