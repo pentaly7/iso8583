@@ -27,15 +27,18 @@ func NewMessage(packager *IsoPackager) *Message {
 	}
 }
 
-func (m *Message) SetByte(bit int, value []byte) {
+func (m *Message) SetByte(bit int, value []byte) *Message {
 	m.isoMessageMap[bit] = value
+	return m
 }
 
-func (m *Message) SetString(bit int, value string) {
+func (m *Message) SetString(bit int, value string) *Message {
 	m.isoMessageMap[bit] = []byte(value)
+	return m
 }
-func (m *Message) SetMTI(value MTIType) {
+func (m *Message) SetMTI(value MTIType) *Message {
 	m.MTI = []byte(value)
+	return m
 }
 
 func (m *Message) GetString(bit int) string {
