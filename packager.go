@@ -49,6 +49,9 @@ func NewPackager(r io.Reader) (*IsoPackager, error) {
 		}
 	}
 
+	// clear packager config that read from reader
+	packager.PackagerConfig = nil
+
 	return &packager, nil
 }
 

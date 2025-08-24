@@ -59,14 +59,24 @@ func (m *Message) getTotalBitLength(bitNum int) (length int, err error) {
 	prefixLen := packager.Length.Type.GetPrefixLen()
 	if prefixLen == 0 {
 		if len(m.isoMessageMap[bitNum]) != packager.Length.Max {
-			return 0, fmt.Errorf("invalid bit length for bit %d: expected %d, got %d", bitNum, packager.Length.Max, len(m.isoMessageMap[bitNum]))
+			return 0, fmt.Errorf(
+				"invalid bit length for bit %d: expected %d, got %d",
+				bitNum,
+				packager.Length.Max,
+				len(m.isoMessageMap[bitNum]),
+			)
 		}
 		return packager.Length.Max, nil
 	}
 
 	length = len(m.isoMessageMap[bitNum])
 	if length > packager.Length.Max {
-		return 0, fmt.Errorf("invalid bit length for bit %d: max %d, got %d", bitNum, packager.Length.Max, len(m.isoMessageMap[bitNum]))
+		return 0, fmt.Errorf(
+			"invalid bit length for bit %d: max %d, got %d",
+			bitNum,
+			packager.Length.Max,
+			len(m.isoMessageMap[bitNum]),
+		)
 	}
 
 	return length + prefixLen, nil

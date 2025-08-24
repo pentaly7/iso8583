@@ -5,17 +5,17 @@ import "fmt"
 type (
 	// Message for Component Message
 	Message struct {
-		packager        *IsoPackager
-		header          []byte         // iso header
-		MTI             MTITypeByte    // MTI
-		firstBitmap     []byte         // First bitmap
-		hasSecondBitmap bool           // Second Bitmap activation
-		secondBitmap    []byte         // Second bitmap
-		isoMessageMap   map[int][]byte // Get Element of Iso Message in Map
-		activeBit       []int          // Find Bit Active for check Mandatory Bit
-		byteData        []byte
-		cursor          int
-		dataLength      int
+		packager         *IsoPackager
+		header           []byte         // iso header
+		MTI              MTITypeByte    // MTI
+		firstBitmap      []byte         // First bitmap
+		secondBitmapFlag bool           // Second Bitmap activation
+		secondBitmap     []byte         // Second bitmap
+		isoMessageMap    map[int][]byte // Get Element of Iso Message in Map
+		activeBit        []int          // Find Bit Active for check Mandatory Bit
+		byteData         []byte
+		cursor           int
+		dataLength       int
 	}
 )
 
