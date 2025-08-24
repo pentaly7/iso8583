@@ -7,7 +7,7 @@ func (t *Data) Pack() []byte {
 	result := make([]byte, 0)
 	for _, v := range t.list {
 		length := len(v.value)
-		result = append(result, uint32ToBytes(v.tag)...)
+		result = append(result, Uint32ToBytes(v.tag)...)
 		result = append(result, byte(length))
 		result = append(result, v.value...)
 	}

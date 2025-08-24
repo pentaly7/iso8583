@@ -1,6 +1,6 @@
 package tlv
 
-func bytesToUint32(b []byte) uint32 {
+func BytesToUint32(b []byte) uint32 {
 	var n uint32
 	for _, v := range b {
 		n = (n << 8) | uint32(v)
@@ -8,7 +8,7 @@ func bytesToUint32(b []byte) uint32 {
 	return n
 }
 
-func uint32ToBytes(n uint32) []byte {
+func Uint32ToBytes(n uint32) []byte {
 	if n == 0 {
 		return nil
 	}

@@ -78,7 +78,7 @@ func New(data []byte) (*Data, error) {
 		i += length
 
 		// Store in map (tag as string)
-		tagKey := bytesToUint32(tag)
+		tagKey := BytesToUint32(tag)
 
 		result.list = append(result.list, TagData{
 			tag:   tagKey,
@@ -98,7 +98,7 @@ func (t *Data) HasTag(tag uint32) bool {
 	return false
 }
 
-func (t *Data) GetByte(tag uint32) []byte {
+func (t *Data) GetBytes(tag uint32) []byte {
 	for _, k := range t.list {
 		if k.tag == tag {
 			return k.value
@@ -108,7 +108,7 @@ func (t *Data) GetByte(tag uint32) []byte {
 }
 
 func (t *Data) GetInt64(tag uint32) int64 {
-	b := t.GetByte(tag)
+	b := t.GetBytes(tag)
 	if b == nil {
 		return 0
 	}
@@ -120,7 +120,7 @@ func (t *Data) GetInt64(tag uint32) int64 {
 }
 
 func (t *Data) GetHexString(tag uint32) string {
-	b := t.GetByte(tag)
+	b := t.GetBytes(tag)
 	if b == nil {
 		return ""
 	}
