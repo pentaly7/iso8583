@@ -38,9 +38,9 @@ func main() {
     msg.MTI = iso8583.MTIFinancialRequestByte
     
     // Set fields
-    msg.SetString(2, "4761739001010119")  // Primary Account Number
-    msg.SetString(3, "000000")            // Processing Code
-    msg.SetString(4, "000000010000")      // Transaction Amount
+    msg.SetString(2, "1234567891234567").
+        SetString(3, "000000").
+        SetString(4, "000000010000")     
     
     // Pack the message
     packed, err := msg.PackISO()
@@ -120,6 +120,10 @@ tlvData, err := tlv.New([]byte{0x5F, 0x2A, 0x02, 0x08, 0x40}) // Example TLV dat
 if err != nil {
     panic(err)
 }
+
+int64Value := tlvData.GetInt64(0x5f2a) // will get int64(840)
+byteValue := tlvData.GetBytes(0x5f2a) // will get []byte{0x08, 0x40}
+stringValue := tlvData.GetHexString(0x5f2a) // will get "0840"
 
 // Add TLV data to ISO message
 msg.SetBytes(55, tlvData.Pack())
