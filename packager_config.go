@@ -2,7 +2,9 @@ package iso8583
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -64,6 +66,15 @@ const (
 	BitTypeANS BitType = "ans" // alphanumeric + special
 	BitTypeB   BitType = "b"   // binary
 	BitTypeZ   BitType = "z"   // track data
+)
+
+var (
+	ErrInvalidValue = errors.New("value does not match bit type")
+
+	// precompiled regex for performance
+	reNumeric   = regexp.MustCompile(`^[0-9]+$`)
+	reAlphaNum  = regexp.MustCompile(`^[A-Za-z0-9]+$`)
+	reTrackData = regexp.MustCompile(`^[0-9D=]+$`) // track 2 chars
 )
 
 // UnmarshalJSON Implement json.Unmarshaler
