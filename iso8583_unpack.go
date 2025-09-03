@@ -20,7 +20,6 @@ func (m *Message) Unpack(b []byte) error {
 	// check ISO header
 
 	if m.packager.HasHeader {
-
 		m.header = m.byteData[:m.packager.HeaderLength]
 		m.cursor += m.packager.HeaderLength
 	} else if bytes.Equal(m.byteData[:3], isoHeader) {

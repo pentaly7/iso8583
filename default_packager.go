@@ -108,7 +108,7 @@ func DefaultPackager() *IsoPackager {
 			100: NewBitConfigLLVar(false, BitTypeANS, 99),
 			101: NewBitConfigLLVar(false, BitTypeANS, 99),
 			102: NewBitConfigLLVar(false, BitTypeANS, 99),
-			103: NewBitConfigLLLVar(false, BitTypeANS, 999),
+			103: NewBitConfigLLVar(false, BitTypeANS, 99),
 			104: NewBitConfigLLLVar(false, BitTypeANS, 999),
 			105: NewBitConfigLLLVar(false, BitTypeANS, 999),
 			106: NewBitConfigLLLVar(false, BitTypeANS, 999),

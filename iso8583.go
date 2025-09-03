@@ -1,7 +1,5 @@
 package iso8583
 
-import "fmt"
-
 type (
 	// Message for Component Message
 	Message struct {
@@ -52,41 +50,6 @@ func (m *Message) GetByte(bit int) []byte {
 func (m *Message) HasBit(bit int) bool {
 	_, ok := m.isoMessageMap[bit]
 	return ok
-}
-
-// ValidateMessage validate ISO Message
-func (m *Message) ValidateMessage() error {
-	if m.MTI.Equal(MTINMMRequestByte) || m.MTI.Equal(MTINMMResponseByte) {
-		mandatoryBits := []int{7, 11, 70}
-		for _, bit := range mandatoryBits {
-			if _, ok := m.isoMessageMap[bit]; ok == false {
-				return fmt.Errorf("missing mandatory bit %d", bit)
-			}
-		}
-		if m.MTI.Equal(MTINMMRequestByte) {
-			return nil
-		}
-		if _, ok := m.isoMessageMap[39]; ok == false {
-			return fmt.Errorf("missing mandatory bit 39 for response")
-		}
-		return nil
-	}
-
-	for _, bit := range m.packager.MandatoryBit {
-		if _, ok := m.isoMessageMap[bit]; ok == false {
-			return fmt.Errorf("missing mandatory bit %d", bit)
-		}
-	}
-
-	if m.MTI.Equal(MTIReversalRequestByte) ||
-		m.MTI.Equal(MTIReversalResponseByte) ||
-		m.MTI.Equal(MTIRepeatedReversalRequestByte) {
-		if _, ok := m.isoMessageMap[90]; ok == false {
-			return fmt.Errorf("missing mandatory bit 90 for reversal")
-		}
-	}
-
-	return nil
 }
 
 // GetMessageKey is to Trace ISO Message created for Tracing ISO Message Respon
