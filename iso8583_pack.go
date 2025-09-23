@@ -2,36 +2,37 @@ package iso8583
 
 import (
 	"bytes"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"sort"
-	"strings"
 )
+
+var EmptyBitmap [8]byte
+var EmptyMti [4]byte
 
 // PackISO to get Create Message ISO in string
 func (m *Message) PackISO() ([]byte, error) {
-	m.mapActiveBit()
-
+	sort.Ints(m.activeBits[:m.activeCount])
 	// count data len to correctly allocate memory
-	m.dataLength = 0
+	dataLength := 0
 
 	if m.packager.HasHeader {
-		m.dataLength += m.packager.HeaderLength
+		dataLength += m.packager.HeaderLength
 	}
 
-	if m.MTI == nil {
+	if m.MTI == EmptyMti {
 		return nil, ErrNoMtiToPack
 	}
-	m.dataLength += len(m.MTI)
+	dataLength += len(m.MTI)
 
-	bitmap := make([]byte, 16) // max 128 bits = 16 bytes
-	m.firstBitmap = nil
-	m.secondBitmap = nil
-	for _, bit := range m.activeBit {
-		if bit < 2 || bit > 128 {
-			errMsg := fmt.Errorf("invalid bit %d", bit)
-			return nil, errors.Join(ErrInvalidBitNumber, errMsg)
+	//bitmap := make([]byte, 16) // max 128 bits = 16 bytes
+
+	bitmap := [16]byte{}
+
+	//for i, v := range m.isoMessageMap {
+	for i := 0; i <= m.activeCount; i++ {
+		bit := m.activeBits[i]
+		if m.isoMessageMap[bit] == nil {
+			continue
 		}
 
 		length, err := m.getTotalBitLength(bit)
@@ -39,7 +40,7 @@ func (m *Message) PackISO() ([]byte, error) {
 			return nil, err
 		}
 
-		m.dataLength += length
+		dataLength += length
 
 		// bit position (ISO8583 is Big Endian, MSB first)
 		byteIndex := (bit - 1) / 8
@@ -51,20 +52,17 @@ func (m *Message) PackISO() ([]byte, error) {
 		bitmap[byteIndex] |= 1 << (7 - bitIndex)
 	}
 
-	// first bitmap is 8 byte, later converted to hex string to be 16 digit hex string
-	m.firstBitmap = bitmap[:8]
-	m.dataLength += BitmapLength
+	dataLength += BitmapLength
 
 	// check second bitmap
-	if !bytes.Equal(bitmap[8:], make([]byte, 8)) {
+	if !bytes.Equal(bitmap[8:], EmptyBitmap[:]) {
 		// set first bit to indicate second bitmap is on
 		// 0x80 is 10000000, and use OR operation
-		m.firstBitmap[0] |= 0x80
-		m.secondBitmap = bitmap[8:16]
-		m.dataLength += BitmapLength
+		bitmap[0] |= 0x80
+		dataLength += BitmapLength
 	}
 
-	result, err := m.processPackIso()
+	result, err := m.processPackIso(bitmap, dataLength)
 	if err != nil {
 		return nil, err
 	}
@@ -72,53 +70,66 @@ func (m *Message) PackISO() ([]byte, error) {
 	return result, nil
 }
 
-func (m *Message) mapActiveBit() {
-	for bitNum := range m.isoMessageMap {
-		if bitNum == 0 {
+func (m *Message) processPackIso(bitmap [16]byte, dataLength int) ([]byte, error) {
+
+	if cap(m.byteData) < dataLength {
+		m.byteData = make([]byte, dataLength) // exact size
+	} else {
+		m.byteData = m.byteData[:dataLength]
+	}
+
+	// Write offset instead of appending
+	pos := 0
+
+	// Header
+	if m.packager.HasHeader {
+		pos += copy(m.byteData[pos:], m.header)
+	}
+
+	// MTI
+	pos += copy(m.byteData[pos:], m.MTI[:])
+
+	// --- First bitmap directly into m.byteData ---
+	encodeHexUpper(m.byteData[pos:], bitmap[:8])
+	pos += BitmapLength
+
+	// --- Second bitmap if exists ---
+	if bitmap[0]&0x80 != 0 {
+		encodeHexUpper(m.byteData[pos:], bitmap[8:])
+		pos += BitmapLength
+	}
+
+	// --- Fields ---
+	for i := 2; i <= 128; i++ {
+		if m.isoMessageMap[i] == nil {
 			continue
 		}
-		m.activeBit = append(m.activeBit, bitNum)
-	}
-
-	// sort active bitmap to correctly handling the packing
-	sort.Ints(m.activeBit)
-}
-
-func (m *Message) processPackIso() (result []byte, err error) {
-	result = make([]byte, 0, m.dataLength)
-
-	if m.packager.HasHeader {
-		result = append(result, m.header...)
-	}
-
-	result = append(result, m.MTI...)
-
-	// need to convert bitmaps to hex string before packing
-	// []byte -> uppercase hex string -> convert the string to []byte
-	// the size will be doubled
-	result = append(result, []byte(strings.ToUpper(hex.EncodeToString(m.firstBitmap)))...)
-
-	if m.secondBitmap != nil {
-		result = append(result, []byte(strings.ToUpper(hex.EncodeToString(m.secondBitmap)))...)
-	}
-
-	for _, i := range m.activeBit {
-		packager, ok := m.packager.IsoPackagerConfig[i]
-		if !ok {
+		packager := m.packager.IsoPackagerConfig[i]
+		if packager.Type == "" {
 			return nil, fmt.Errorf("packager not found for bit %d", i)
 		}
-		lenType := packager.Length.Type
 
-		prefixLen := lenType.GetPrefixLen()
-		if prefixLen == 0 {
-			result = append(result, m.isoMessageMap[i]...)
-			continue
+		prefixLen := packager.Length.Type.GetPrefixLen()
+
+		if prefixLen > 0 {
+			packager.Length.Type.encodeLenInto(len(m.isoMessageMap[i]), m.byteData[pos:pos+prefixLen])
+			pos += prefixLen
 		}
 
-		encPrefixLen := lenType.encodeLen(len(m.isoMessageMap[i]), prefixLen)
-		result = append(result, encPrefixLen...)
-		result = append(result, m.isoMessageMap[i]...)
+		pos += copy(m.byteData[pos:], m.isoMessageMap[i])
 	}
 
-	return result, nil
+	// Trim to actual used size
+	final := m.byteData[:pos]
+
+	return final, nil
+}
+
+var hexUpper = "0123456789ABCDEF"
+
+func encodeHexUpper(dst []byte, src []byte) {
+	for i, b := range src {
+		dst[i*2] = hexUpper[b>>4]
+		dst[i*2+1] = hexUpper[b&0x0f]
+	}
 }

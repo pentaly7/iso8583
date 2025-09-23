@@ -1,46 +1,99 @@
 package iso8583
 
+import (
+	"unsafe"
+)
+
+// bitPositions[byte] = slice of positions (1–8) of set bits in that byte.
+// Example: 0b10100000 (0xA0) -> []int{1, 3}
+var bitPositions [256][8]int
+var bitCounts [256]int
+
+// initiate lookup table
+func init() {
+	for b := 0; b < 256; b++ {
+		pos := 0
+		for i := 0; i < 8; i++ {
+			if b&(1<<(7-i)) != 0 {
+				bitPositions[b][pos] = i + 1 // bit numbers 1–8
+				pos++
+			}
+		}
+		bitCounts[b] = pos
+	}
+}
+
 type (
 	// Message for Component Message
 	Message struct {
-		packager         *IsoPackager
-		header           []byte         // iso header
-		MTI              MTITypeByte    // MTI
-		firstBitmap      []byte         // First bitmap
-		secondBitmapFlag bool           // Second Bitmap activation
-		secondBitmap     []byte         // Second bitmap
-		isoMessageMap    map[int][]byte // Get Element of Iso Message in Map
-		activeBit        []int          // Find Bit Active for check Mandatory Bit
-		byteData         []byte
-		cursor           int
-		dataLength       int
+		MTI           MTITypeByte // MTI
+		header        []byte      // iso header
+		isoMessageMap [129][]byte // Get Element of Iso Message in Map
+		activeBits    [129]int
+		packager      *IsoPackager
+		activeCount   int
+		byteData      []byte
 	}
 )
 
 func NewMessage(packager *IsoPackager) *Message {
-
 	return &Message{
-		packager:      packager,
-		isoMessageMap: make(map[int][]byte),
+		packager: packager,
+		byteData: make([]byte, 0, 4096),
 	}
 }
 
 func (m *Message) SetByte(bit int, value []byte) *Message {
+	if m.isoMessageMap[bit] == nil { // only insert if new
+		m.appendBit(bit)
+	}
 	m.isoMessageMap[bit] = value
 	return m
 }
 
-func (m *Message) SetString(bit int, value string) *Message {
-	m.isoMessageMap[bit] = []byte(value)
+func (m *Message) SetString(bit int, s string) *Message {
+	if m.isoMessageMap[bit] == nil { // only insert if new
+		m.appendBit(bit)
+	}
+	if len(s) == 0 {
+		m.isoMessageMap[bit] = []byte{}
+		return m
+	}
+	m.isoMessageMap[bit] = unsafe.Slice(unsafe.StringData(s), len(s))
 	return m
 }
-func (m *Message) SetMTI(value MTIType) *Message {
-	m.MTI = []byte(value)
+func (m *Message) SetMtiString(s MTIType) *Message {
+	m.MTI = s.ToMtiByte()
+	return m
+}
+func (m *Message) SetMTIByte(value MTITypeByte) *Message {
+	m.MTI = value
+	return m
+}
+
+func (m *Message) appendBit(bit int) {
+	m.activeBits[m.activeCount] = bit
+	m.activeCount++
+}
+
+func (m *Message) Unset(bit int) *Message {
+	for i := 0; i < m.activeCount; i++ {
+		if m.activeBits[i] == bit {
+			m.isoMessageMap[bit] = nil
+
+			// swap with last
+			m.activeBits[i] = m.activeBits[m.activeCount-1]
+			m.activeBits[m.activeCount-1] = 0 // optional cleanup
+			m.activeCount--
+			break
+		}
+	}
 	return m
 }
 
 func (m *Message) GetString(bit int) string {
-	return string(m.isoMessageMap[bit])
+	b := m.isoMessageMap[bit]
+	return unsafe.String(unsafe.SliceData(b), len(b))
 }
 
 func (m *Message) GetByte(bit int) []byte {
@@ -48,8 +101,11 @@ func (m *Message) GetByte(bit int) []byte {
 }
 
 func (m *Message) HasBit(bit int) bool {
-	_, ok := m.isoMessageMap[bit]
-	return ok
+	val := m.isoMessageMap[bit]
+	if val != nil {
+		return true
+	}
+	return false
 }
 
 // GetMessageKey is to Trace ISO Message created for Tracing ISO Message Respon
@@ -58,9 +114,9 @@ func (m *Message) GetMessageKey() string {
 	// combination ISO => MTI(respon), PAN , STAN, RRN, TransmissionDateTime
 	if m.IsRequest() {
 		mtiRes, _ := m.GetMTIResponse()
-		result = string(mtiRes)
+		result = mtiRes.String()
 	} else {
-		result = string(m.MTI)
+		result = m.MTI.String()
 	}
 	isomap := m.isoMessageMap
 	for _, v := range m.packager.MessageKey {
@@ -80,7 +136,7 @@ func (m *Message) GetMTIResponse() (mti MTITypeByte, err error) {
 	case m.MTI.Equal(MTINMMRequestByte):
 		mti = MTINMMResponseByte
 	default:
-		return nil, ErrNotDefaultMti
+		return mti, ErrNotDefaultMti
 	}
 	return mti, nil
 }

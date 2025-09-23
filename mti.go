@@ -1,7 +1,5 @@
 package iso8583
 
-import "bytes"
-
 type MTIType string
 
 const (
@@ -16,24 +14,51 @@ const (
 	MTINMMResponse             MTIType = "0810"
 )
 
-type MTITypeByte []byte
+type MTITypeByte [4]byte
 
 var (
-	MTICardProcessingRequestByte   MTITypeByte = []byte("0100")
-	MTICardProcessingResponseByte  MTITypeByte = []byte("0110")
-	MTIFinancialRequestByte        MTITypeByte = []byte("0200")
-	MTIFinancialResponseByte       MTITypeByte = []byte("0210")
-	MTIReversalRequestByte         MTITypeByte = []byte("0400")
-	MTIReversalResponseByte        MTITypeByte = []byte("0410")
-	MTIRepeatedReversalRequestByte MTITypeByte = []byte("0401")
-	MTINMMRequestByte              MTITypeByte = []byte("0800")
-	MTINMMResponseByte             MTITypeByte = []byte("0810")
+	MTICardProcessingRequestByte   MTITypeByte = [4]byte{0x30, 0x31, 0x30, 0x30}
+	MTICardProcessingResponseByte  MTITypeByte = [4]byte{0x30, 0x31, 0x31, 0x30}
+	MTIFinancialRequestByte        MTITypeByte = [4]byte{0x30, 0x32, 0x30, 0x30}
+	MTIFinancialResponseByte       MTITypeByte = [4]byte{0x30, 0x32, 0x30, 0x30}
+	MTIReversalRequestByte         MTITypeByte = [4]byte{0x30, 0x34, 0x30, 0x30}
+	MTIReversalResponseByte        MTITypeByte = [4]byte{0x30, 0x34, 0x31, 0x30}
+	MTIRepeatedReversalRequestByte MTITypeByte = [4]byte{0x30, 0x34, 0x30, 0x31}
+	MTINMMRequestByte              MTITypeByte = [4]byte{0x30, 0x38, 0x30, 0x30}
+	MTINMMResponseByte             MTITypeByte = [4]byte{0x30, 0x34, 0x31, 0x30}
 )
 
+// Pre-computed valid MTI lookup for O(1) validation
+var validMTIs = map[[4]byte]struct{}{
+	MTICardProcessingRequestByte:   {},
+	MTICardProcessingResponseByte:  {},
+	MTIFinancialRequestByte:        {},
+	MTIFinancialResponseByte:       {},
+	MTIReversalRequestByte:         {},
+	MTIReversalResponseByte:        {},
+	MTIRepeatedReversalRequestByte: {},
+	MTINMMRequestByte:              {},
+	MTINMMResponseByte:             {},
+}
+
+func (m MTITypeByte) ToMtiString() MTIType {
+	return MTIType(m[:])
+}
 func (m MTITypeByte) String() string {
-	return string(m)
+	return string(m[:])
 }
 
 func (m MTITypeByte) Equal(other MTITypeByte) bool {
-	return bytes.Equal(m, other)
+	return m == other
+}
+
+func (ms MTIType) ToMtiByte() MTITypeByte {
+	var b MTITypeByte
+	copy(b[:], ms) // string → []byte → [4]byte
+	return b
+}
+
+func isValidMti(mti MTITypeByte) bool {
+	_, ok := validMTIs[mti]
+	return ok
 }

@@ -5,7 +5,7 @@ func DefaultPackager() *IsoPackager {
 		HasHeader:    false,
 		HeaderLength: 0,
 		MessageKey:   []int{2, 7, 11, 12, 13, 41, 37},
-		IsoPackagerConfig: map[int]BitConfig{
+		IsoPackagerConfig: [129]BitConfig{
 			1:   NewBitConfigFixed(true, BitTypeB, 16),
 			2:   NewBitConfigLLVar(true, BitTypeN, 19),
 			3:   NewBitConfigFixed(false, BitTypeANS, 6),
@@ -138,6 +138,17 @@ func DefaultPackager() *IsoPackager {
 	}
 
 	packager.MandatoryBit = packager.GetMandatoryBitsFromConfig()
+
+	// Convert map to array for direct access
+	for k, v := range packager.IsoPackagerConfig {
+		if k >= 0 && k <= 128 {
+			packager.IsoPackagerConfig[k] = v
+
+			// Pre-compute values for faster access
+			packager.PrefixLengths[k] = v.Length.Type.GetPrefixLen()
+			packager.MaxLengths[k] = v.Length.Max
+		}
+	}
 
 	return packager
 }

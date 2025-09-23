@@ -3,7 +3,6 @@ package iso8583
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"regexp"
 	"strings"
 )
@@ -37,8 +36,11 @@ func (lt *LengthType) GetPrefixLen() int {
 	}
 }
 
-func (lt *LengthType) encodeLen(n, size int) []byte {
-	return []byte(fmt.Sprintf("%0*d", size, n))
+func (lt *LengthType) encodeLenInto(n int, dst []byte) {
+	for i := len(dst) - 1; i >= 0; i-- {
+		dst[i] = byte('0' + (n % 10))
+		n /= 10
+	}
 }
 
 // UnmarshalJSON Implement json.Unmarshaler
