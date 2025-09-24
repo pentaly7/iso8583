@@ -6,21 +6,39 @@ import (
 
 // bitPositions[byte] = slice of positions (1–8) of set bits in that byte.
 // Example: 0b10100000 (0xA0) -> []int{1, 3}
-var bitPositions [256][8]int
-var bitCounts [256]int
+var (
+	bitPositions   [256][8]int
+	bitCounts      [256]int
+	fourDigitTable [10000][4]byte
+	hexTable       [256][2]byte
+)
 
-// initiate lookup table
+// init initializes lookup tables used for bit manipulation and data conversion.
+// It pre-calculates bit positions, bit counts, hexadecimal representations,
+// and four-digit decimal representations for improved performance.
 func init() {
-	for b := 0; b < 256; b++ {
-		pos := 0
-		for i := 0; i < 8; i++ {
-			if b&(1<<(7-i)) != 0 {
-				bitPositions[b][pos] = i + 1 // bit numbers 1–8
-				pos++
+	const digits = "0123456789ABCDEF"
+	for b := 0; b < 10000; b++ {
+		if b < 256 {
+			pos := 0
+			for i := 0; i < 8; i++ {
+				if b&(1<<(7-i)) != 0 {
+					bitPositions[b][pos] = i + 1 // bit numbers 1–8
+					pos++
+				}
 			}
+			bitCounts[b] = pos
+
+			hexTable[b][0] = digits[b>>4]
+			hexTable[b][1] = digits[b&0x0F]
 		}
-		bitCounts[b] = pos
+
+		fourDigitTable[b][0] = byte('0' + b/1000)
+		fourDigitTable[b][1] = byte('0' + (b/100)%10)
+		fourDigitTable[b][2] = byte('0' + (b/10)%10)
+		fourDigitTable[b][3] = byte('0' + b%10)
 	}
+
 }
 
 type (
@@ -37,6 +55,7 @@ type (
 )
 
 func NewMessage(packager *IsoPackager) *Message {
+
 	return &Message{
 		packager: packager,
 		byteData: make([]byte, 0, 4096),
@@ -219,7 +238,7 @@ func CreateResponseISO(i Message, rc string) ([]byte, error) {
 		return nil, err
 	}
 	msg.SetString(39, rc)
-	result, err := i.PackISO()
+	result, err := msg.PackISO()
 	if err != nil {
 		return nil, err
 	}

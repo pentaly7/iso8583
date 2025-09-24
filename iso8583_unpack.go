@@ -69,7 +69,7 @@ func (m *Message) parseBitmap(b []byte, cursor int) error {
 
 	cursor += BitmapLength
 
-	maxBits := 64
+	maxBits := 8
 	// If bit 1 (first bit) is set, there is a secondary bitmap to parse later.
 	if bitmap[0]&(0x80) != 0 { // bit index 0 -> bit 1
 		if len(b[cursor:]) < BitmapLength {
@@ -82,13 +82,13 @@ func (m *Message) parseBitmap(b []byte, cursor int) error {
 			return ErrInvalidBitMap
 		}
 		cursor += BitmapLength
-		maxBits = 128
+		maxBits = 16
 		// flip the bit 1
 		bitmap[0] &= 0x7F
 	}
 
 	// Process primary bitmap bits
-	for byteIdx := 0; byteIdx < maxBits/8; byteIdx++ {
+	for byteIdx := 0; byteIdx < maxBits; byteIdx++ {
 		v := bitmap[byteIdx]
 		if v == 0 {
 			continue
@@ -114,7 +114,6 @@ func (m *Message) parseBitmap(b []byte, cursor int) error {
 
 			value := b[cursor : cursor+length]
 			cursor += length
-
 			m.isoMessageMap[bitNum] = value
 			m.appendBit(bitNum)
 		}

@@ -29,11 +29,8 @@ func (m *Message) PackISO() ([]byte, error) {
 	bitmap := [16]byte{}
 
 	//for i, v := range m.isoMessageMap {
-	for i := 0; i <= m.activeCount; i++ {
+	for i := 0; i < m.activeCount; i++ {
 		bit := m.activeBits[i]
-		if m.isoMessageMap[bit] == nil {
-			continue
-		}
 
 		length, err := m.getTotalBitLength(bit)
 		if err != nil {
@@ -70,6 +67,10 @@ func (m *Message) PackISO() ([]byte, error) {
 	return result, nil
 }
 
+func (m *Message) processLength(bitNum int) {
+
+}
+
 func (m *Message) processPackIso(bitmap [16]byte, dataLength int) ([]byte, error) {
 
 	if cap(m.byteData) < dataLength {
@@ -100,23 +101,30 @@ func (m *Message) processPackIso(bitmap [16]byte, dataLength int) ([]byte, error
 	}
 
 	// --- Fields ---
-	for i := 2; i <= 128; i++ {
-		if m.isoMessageMap[i] == nil {
-			continue
-		}
-		packager := m.packager.IsoPackagerConfig[i]
-		if packager.Type == "" {
-			return nil, fmt.Errorf("packager not found for bit %d", i)
+	for i := 0; i < m.activeCount; i++ {
+		bitNum := m.activeBits[i]
+		prefixLen := m.packager.PrefixLengths[bitNum]
+		value := m.isoMessageMap[bitNum]
+
+		if prefixLen == 0 {
+			return nil, fmt.Errorf("packager not found for bit %d", bitNum)
 		}
 
-		prefixLen := packager.Length.Type.GetPrefixLen()
-
-		if prefixLen > 0 {
-			packager.Length.Type.encodeLenInto(len(m.isoMessageMap[i]), m.byteData[pos:pos+prefixLen])
+		if prefixLen != FixedLength {
+			length := len(value)
+			if length > m.packager.MaxLengths[bitNum] {
+				return nil, fmt.Errorf(
+					"invalid bit length for bit %d: max %d, got %d",
+					bitNum,
+					m.packager.MaxLengths[bitNum],
+					length,
+				)
+			}
+			encodeLenInto(length, prefixLen, m.byteData[pos:pos+prefixLen])
 			pos += prefixLen
 		}
 
-		pos += copy(m.byteData[pos:], m.isoMessageMap[i])
+		pos += copy(m.byteData[pos:], value)
 	}
 
 	// Trim to actual used size
@@ -125,11 +133,19 @@ func (m *Message) processPackIso(bitmap [16]byte, dataLength int) ([]byte, error
 	return final, nil
 }
 
-var hexUpper = "0123456789ABCDEF"
-
+// encodeHexUpper encodes the source byte slice into hexadecimal representation
+// and stores the result in the destination byte slice.
+//
+// The function uses uppercase hexadecimal characters (0-9, A-F) for encoding.
+//
+// Parameters:
+//   - dst: the destination byte slice where the encoded hexadecimal values will be stored
+//   - src: the source byte slice containing the original data to be encoded
+//
+// Note: The destination slice must have sufficient capacity (at least 2*len(src)) to
+// accommodate the encoded result, as each byte in src produces two hexadecimal characters.
 func encodeHexUpper(dst []byte, src []byte) {
 	for i, b := range src {
-		dst[i*2] = hexUpper[b>>4]
-		dst[i*2+1] = hexUpper[b&0x0f]
+		dst[i*2], dst[i*2+1] = hexTable[b][0], hexTable[b][1]
 	}
 }

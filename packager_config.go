@@ -21,25 +21,25 @@ const (
 	LengthTypeLLLLVar LengthType = "LLLLVAR"
 )
 
+const (
+	FixedLength   = 1
+	LLVarLength   = 2
+	LLLVarLength  = 3
+	LLLLVarLength = 4
+)
+
 func (lt *LengthType) GetPrefixLen() int {
 	switch *lt {
 	case LengthTypeFixed:
-		return 0
+		return FixedLength
 	case LengthTypeLLVar:
-		return 2
+		return LLVarLength
 	case LengthTypeLLLVar:
-		return 3
+		return LLLVarLength
 	case LengthTypeLLLLVar:
-		return 4
+		return LLLLVarLength
 	default:
-		return -1
-	}
-}
-
-func (lt *LengthType) encodeLenInto(n int, dst []byte) {
-	for i := len(dst) - 1; i >= 0; i-- {
-		dst[i] = byte('0' + (n % 10))
-		n /= 10
+		return 0
 	}
 }
 
