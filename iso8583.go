@@ -1,6 +1,7 @@
 package iso8583
 
 import (
+	"sync"
 	"unsafe"
 )
 
@@ -11,12 +12,19 @@ var (
 	bitCounts      [256]int
 	fourDigitTable [10000][4]byte
 	hexTable       [256][2]byte
+	once           sync.Once
 )
 
 // init initializes lookup tables used for bit manipulation and data conversion.
 // It pre-calculates bit positions, bit counts, hexadecimal representations,
 // and four-digit decimal representations for improved performance.
 func init() {
+	once.Do(func() {
+		initLookupTables()
+	})
+}
+
+func initLookupTables() {
 	const digits = "0123456789ABCDEF"
 	for b := 0; b < 10000; b++ {
 		if b < 256 {
@@ -38,7 +46,6 @@ func init() {
 		fourDigitTable[b][2] = byte('0' + (b/10)%10)
 		fourDigitTable[b][3] = byte('0' + b%10)
 	}
-
 }
 
 type (
