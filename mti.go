@@ -1,5 +1,7 @@
 package iso8583
 
+import "unsafe"
+
 type MTIType string
 
 const (
@@ -45,7 +47,7 @@ func (m MTITypeByte) ToMtiString() MTIType {
 	return MTIType(m[:])
 }
 func (m MTITypeByte) String() string {
-	return string(m[:])
+	return unsafe.String(unsafe.SliceData(m[:]), len(m[:]))
 }
 
 func (m MTITypeByte) Equal(other MTITypeByte) bool {

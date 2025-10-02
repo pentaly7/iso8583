@@ -1,6 +1,7 @@
 package iso8583
 
 import (
+	"strings"
 	"sync"
 	"unsafe"
 )
@@ -139,19 +140,19 @@ func (m *Message) HasBit(bit int) bool {
 
 // GetMessageKey is to Trace ISO Message created for Tracing ISO Message Respon
 func (m *Message) GetMessageKey() string {
-	var result string
+	var result strings.Builder
 	// combination ISO => MTI(respon), PAN , STAN, RRN, TransmissionDateTime
 	if m.IsRequest() {
 		mtiRes, _ := m.GetMTIResponse()
-		result = mtiRes.String()
+		result.WriteString(mtiRes.String())
 	} else {
-		result = m.MTI.String()
+		result.WriteString(m.MTI.String())
 	}
-	isomap := m.isoMessageMap
+
 	for _, v := range m.packager.MessageKey {
-		result += string(isomap[v])
+		result.WriteString(m.GetString(v))
 	}
-	return result
+	return result.String()
 }
 
 func (m *Message) GetMTIResponse() (mti MTITypeByte, err error) {
@@ -236,7 +237,7 @@ func (m *Message) IsResponse() bool {
 }
 
 // CreateResponseISO create response ISO Message
-func CreateResponseISO(i Message, rc string) ([]byte, error) {
+func CreateResponseISO(i *Message, rc string) ([]byte, error) {
 	// create msg
 	msg := NewMessage(i.packager)
 	msg.MTI = i.MTI
