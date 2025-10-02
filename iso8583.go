@@ -144,13 +144,13 @@ func (m *Message) GetMessageKey() string {
 	// combination ISO => MTI(respon), PAN , STAN, RRN, TransmissionDateTime
 	if m.IsRequest() {
 		mtiRes, _ := m.GetMTIResponse()
-		result.WriteString(mtiRes.String())
+		result.Write(mtiRes[:])
 	} else {
-		result.WriteString(m.MTI.String())
+		result.Write(m.MTI[:])
 	}
 
 	for _, v := range m.packager.MessageKey {
-		result.WriteString(m.GetString(v))
+		result.Write(m.GetByte(v))
 	}
 	return result.String()
 }
