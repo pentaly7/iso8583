@@ -70,6 +70,9 @@ func NewMessage(packager *IsoPackager) *Message {
 }
 
 func (m *Message) SetByte(bit int, value []byte) *Message {
+	if value == nil {
+		return m
+	}
 	if m.isoMessageMap[bit] == nil { // only insert if new
 		m.appendBit(bit)
 	}
