@@ -236,6 +236,16 @@ func (m *Message) IsResponse() bool {
 	}
 }
 
+// ClearEntries for clear all entries so this message can be reused
+func (m *Message) ClearEntries() {
+	m.MTI = EmptyMti
+	m.byteData = m.byteData[:0]
+	for i := 0; i < m.activeCount; i++ {
+		m.isoMessageMap[m.activeBits[i]] = nil
+	}
+	m.activeCount = 0
+}
+
 // CreateResponseISO create response ISO Message
 func CreateResponseISO(i *Message, rc string) ([]byte, error) {
 	// create msg
