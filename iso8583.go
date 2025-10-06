@@ -1,7 +1,6 @@
 package iso8583
 
 import (
-	"strings"
 	"sync"
 	"unsafe"
 )
@@ -56,8 +55,9 @@ type (
 		header        []byte      // iso header
 		isoMessageMap [129][]byte // Get Element of Iso Message in Map
 		activeBits    [129]int
-		packager      *IsoPackager
 		activeCount   int
+		keyBuffer     [128]byte
+		packager      *IsoPackager
 		byteData      []byte
 	}
 )
@@ -140,19 +140,24 @@ func (m *Message) HasBit(bit int) bool {
 
 // GetMessageKey is to Trace ISO Message created for Tracing ISO Message Respon
 func (m *Message) GetMessageKey() string {
-	var result strings.Builder
-	// combination ISO => MTI(respon), PAN , STAN, RRN, TransmissionDateTime
+	// Build directly into pre-allocated buffer
+	pos := 0
+
+	// MTI (4 bytes)
 	if m.IsRequest() {
 		mtiRes, _ := m.GetMTIResponse()
-		result.Write(mtiRes[:])
+		pos += copy(m.keyBuffer[pos:], mtiRes[:])
 	} else {
-		result.Write(m.MTI[:])
+		pos += copy(m.keyBuffer[pos:], m.MTI[:])
 	}
 
-	for _, v := range m.packager.MessageKey {
-		result.Write(m.GetByte(v))
+	// Key fields
+	for _, bitNum := range m.packager.MessageKey {
+		pos += copy(m.keyBuffer[pos:], m.isoMessageMap[bitNum])
 	}
-	return result.String()
+
+	// Convert to string (still allocates the string, but no intermediate buffers)
+	return unsafe.String(unsafe.SliceData(m.keyBuffer[:]), pos)
 }
 
 func (m *Message) GetMTIResponse() (mti MTITypeByte, err error) {
@@ -252,7 +257,9 @@ func CreateResponseISO(i *Message, rc string) ([]byte, error) {
 	msg := NewMessage(i.packager)
 	msg.MTI = i.MTI
 	for bit, v := range i.isoMessageMap {
-		msg.SetByte(bit, v)
+		if v != nil {
+			msg.SetByte(bit, v)
+		}
 	}
 	err := msg.SetMTIResponse()
 	if err != nil {
