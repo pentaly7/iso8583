@@ -27,7 +27,7 @@ var (
 	MTIReversalResponseByte        MTITypeByte = [4]byte{0x30, 0x34, 0x31, 0x30}
 	MTIRepeatedReversalRequestByte MTITypeByte = [4]byte{0x30, 0x34, 0x30, 0x31}
 	MTINMMRequestByte              MTITypeByte = [4]byte{0x30, 0x38, 0x30, 0x30}
-	MTINMMResponseByte             MTITypeByte = [4]byte{0x30, 0x34, 0x31, 0x30}
+	MTINMMResponseByte             MTITypeByte = [4]byte{0x30, 0x38, 0x31, 0x30}
 )
 
 // Pre-computed valid MTI lookup for O(1) validation
