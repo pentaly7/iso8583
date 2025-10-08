@@ -22,7 +22,7 @@ var (
 	MTICardProcessingRequestByte   MTITypeByte = [4]byte{0x30, 0x31, 0x30, 0x30}
 	MTICardProcessingResponseByte  MTITypeByte = [4]byte{0x30, 0x31, 0x31, 0x30}
 	MTIFinancialRequestByte        MTITypeByte = [4]byte{0x30, 0x32, 0x30, 0x30}
-	MTIFinancialResponseByte       MTITypeByte = [4]byte{0x30, 0x32, 0x30, 0x30}
+	MTIFinancialResponseByte       MTITypeByte = [4]byte{0x30, 0x32, 0x31, 0x30}
 	MTIReversalRequestByte         MTITypeByte = [4]byte{0x30, 0x34, 0x30, 0x30}
 	MTIReversalResponseByte        MTITypeByte = [4]byte{0x30, 0x34, 0x31, 0x30}
 	MTIRepeatedReversalRequestByte MTITypeByte = [4]byte{0x30, 0x34, 0x30, 0x31}
