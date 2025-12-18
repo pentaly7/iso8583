@@ -59,45 +59,42 @@ func (m *Message) PackISO() ([]byte, error) {
 		dataLength += BitmapLength
 	}
 
-	result, err := m.processPackIso(bitmap, dataLength)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func (m *Message) processLength(bitNum int) {
+	return m.processPackIso(bitmap, dataLength)
 
 }
 
 func (m *Message) processPackIso(bitmap [16]byte, dataLength int) ([]byte, error) {
 
-	if cap(m.byteData) < dataLength {
-		m.byteData = make([]byte, dataLength) // exact size
-	} else {
-		m.byteData = m.byteData[:dataLength]
-	}
+	byteData := make([]byte, dataLength)
 
 	// Write offset instead of appending
 	pos := 0
 
 	// Header
 	if m.packager.HasHeader {
-		pos += copy(m.byteData[pos:], m.header)
+		pos += copy(byteData[pos:], m.header)
+		// byteData = append(byteData, m.header...)
 	}
 
 	// MTI
-	pos += copy(m.byteData[pos:], m.MTI[:])
+	pos += copy(byteData[pos:], m.MTI[:])
+	// byteData = append(byteData, m.MTI[:]...)
 
-	// --- First bitmap directly into m.byteData ---
-	encodeHexUpper(m.byteData[pos:], bitmap[:8])
+	// --- First bitmap directly into byteData ---
+	// for _, b := range bitmap[:8] {
+	// 	byteData = append(byteData, hexTable[b][0], hexTable[b][1])
+	// }
+	encodeHexUpper(byteData[pos:], bitmap[:8])
 	pos += BitmapLength
 
 	// --- Second bitmap if exists ---
 	if bitmap[0]&0x80 != 0 {
-		encodeHexUpper(m.byteData[pos:], bitmap[8:])
+		// for _, b := range bitmap[8:] {
+		// 	byteData = append(byteData, hexTable[b][0], hexTable[b][1])
+		// }
+		encodeHexUpper(byteData[pos:], bitmap[8:])
 		pos += BitmapLength
+
 	}
 
 	// --- Fields ---
@@ -120,17 +117,15 @@ func (m *Message) processPackIso(bitmap [16]byte, dataLength int) ([]byte, error
 					length,
 				)
 			}
-			encodeLenInto(length, prefixLen, m.byteData[pos:pos+prefixLen])
+			encodeLenInto(length, prefixLen, byteData[pos:pos+prefixLen])
 			pos += prefixLen
 		}
 
-		pos += copy(m.byteData[pos:], value)
+		pos += copy(byteData[pos:], value)
+		// byteData = append(byteData, value...)
 	}
 
-	// Trim to actual used size
-	final := m.byteData[:pos]
-
-	return final, nil
+	return byteData, nil
 }
 
 // encodeHexUpper encodes the source byte slice into hexadecimal representation

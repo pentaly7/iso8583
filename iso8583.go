@@ -58,7 +58,8 @@ type (
 		activeCount   int
 		keyBuffer     [128]byte
 		packager      *IsoPackager
-		byteData      []byte
+		length        int
+		err           error
 	}
 )
 
@@ -66,7 +67,6 @@ func NewMessage(packager *IsoPackager) *Message {
 
 	return &Message{
 		packager: packager,
-		byteData: make([]byte, 0, 4096),
 	}
 }
 
@@ -244,7 +244,6 @@ func (m *Message) IsResponse() bool {
 // ClearEntries for clear all entries so this message can be reused
 func (m *Message) ClearEntries() {
 	m.MTI = EmptyMti
-	m.byteData = m.byteData[:0]
 	for i := 0; i < m.activeCount; i++ {
 		m.isoMessageMap[m.activeBits[i]] = nil
 	}
@@ -252,7 +251,7 @@ func (m *Message) ClearEntries() {
 }
 
 // CreateResponseISO create response ISO Message
-func CreateResponseISO(i *Message, rc string) ([]byte, error) {
+func CreateResponseISO(i *Message, rc string) (*Message, error) {
 	// create msg
 	msg := NewMessage(i.packager)
 	msg.MTI = i.MTI
@@ -266,9 +265,16 @@ func CreateResponseISO(i *Message, rc string) ([]byte, error) {
 		return nil, err
 	}
 	msg.SetString(39, rc)
-	result, err := msg.PackISO()
-	if err != nil {
-		return nil, err
+	return msg, nil
+}
+
+func CloneMessage(m *Message) *Message {
+	msg := NewMessage(m.packager)
+	msg.MTI = m.MTI
+	for bit, v := range m.isoMessageMap {
+		if v != nil {
+			msg.SetByte(bit, v)
+		}
 	}
-	return result, nil
+	return msg
 }

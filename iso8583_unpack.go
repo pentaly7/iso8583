@@ -5,9 +5,16 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"unsafe"
 )
 
 const BitmapLength = 16
+
+func (m *Message) UnpackString(s string) error {
+	// convert string to byte array without allocating
+	b := unsafe.Slice(unsafe.StringData(s), len(s))
+	return m.Unpack(b)
+}
 
 // Unpack to Single Data Element
 func (m *Message) Unpack(b []byte) error {
