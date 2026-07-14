@@ -166,8 +166,12 @@ func (m *Message) GetMTIResponse() (mti MTITypeByte, err error) {
 		mti = MTICardProcessingResponseByte
 	case m.MTI.Equal(MTIFinancialRequestByte):
 		mti = MTIFinancialResponseByte
-	case m.MTI.Equal(MTIReversalRequestByte), m.MTI.Equal(MTIRepeatedReversalRequestByte):
+	case m.MTI.Equal(MTIReversalRequestByte),
+		m.MTI.Equal(MTIRepeatedReversalRequestByte):
 		mti = MTIReversalResponseByte
+	case m.MTI.Equal(MTIReversalAdviceRequestByte),
+		m.MTI.Equal(MTIReversalAdviceRepeatedRequestByte):
+		mti = MTIReversalAdviceResponseByte
 	case m.MTI.Equal(MTINMMRequestByte):
 		mti = MTINMMResponseByte
 	default:
@@ -193,6 +197,8 @@ func (m *Message) IsRequest() bool {
 		m.MTI.Equal(MTIFinancialRequestByte),
 		m.MTI.Equal(MTIReversalRequestByte),
 		m.MTI.Equal(MTIRepeatedReversalRequestByte),
+		m.MTI.Equal(MTIReversalAdviceRequestByte),
+		m.MTI.Equal(MTIReversalAdviceRepeatedRequestByte),
 		m.MTI.Equal(MTINMMRequestByte):
 		return true
 	default:
@@ -209,6 +215,9 @@ func (m *Message) IsTransactional() bool {
 		m.MTI.Equal(MTIFinancialResponseByte),
 		m.MTI.Equal(MTIReversalRequestByte),
 		m.MTI.Equal(MTIReversalResponseByte),
+		m.MTI.Equal(MTIReversalAdviceRequestByte),
+		m.MTI.Equal(MTIReversalAdviceResponseByte),
+		m.MTI.Equal(MTIReversalAdviceRepeatedRequestByte),
 		m.MTI.Equal(MTIRepeatedReversalRequestByte):
 		return true
 	default:
@@ -234,7 +243,8 @@ func (m *Message) IsResponse() bool {
 	case m.MTI.Equal(MTICardProcessingResponseByte),
 		m.MTI.Equal(MTIFinancialResponseByte),
 		m.MTI.Equal(MTIReversalResponseByte),
-		m.MTI.Equal(MTINMMResponseByte):
+		m.MTI.Equal(MTINMMResponseByte),
+		m.MTI.Equal(MTIReversalAdviceResponseByte):
 		return true
 	default:
 		return false

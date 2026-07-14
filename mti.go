@@ -5,42 +5,53 @@ import "unsafe"
 type MTIType string
 
 const (
-	MTICardProcessingRequest   MTIType = "0100"
-	MTICardProcessingResponse  MTIType = "0110"
-	MTIFinancialRequest        MTIType = "0200"
-	MTIFinancialResponse       MTIType = "0210"
-	MTIReversalRequest         MTIType = "0400"
-	MTIReversalResponse        MTIType = "0410"
-	MTIRepeatedReversalRequest MTIType = "0401"
-	MTINMMRequest              MTIType = "0800"
-	MTINMMResponse             MTIType = "0810"
+	MTICardProcessingRequest         MTIType = "0100"
+	MTICardProcessingResponse        MTIType = "0110"
+	MTIFinancialRequest              MTIType = "0200"
+	MTIFinancialResponse             MTIType = "0210"
+	MTIReversalRequest               MTIType = "0400"
+	MTIReversalAdviceRequest         MTIType = "0420"
+	MTIReversalAdviceRepeatedRequest MTIType = "0421"
+	MTIReversalAdviceResponse        MTIType = "0430"
+	MTIReversalResponse              MTIType = "0410"
+	MTIRepeatedReversalRequest       MTIType = "0401"
+	MTINMMRequest                    MTIType = "0800"
+	MTINMMResponse                   MTIType = "0810"
 )
 
 type MTITypeByte [4]byte
 
 var (
-	MTICardProcessingRequestByte   MTITypeByte = [4]byte{0x30, 0x31, 0x30, 0x30}
-	MTICardProcessingResponseByte  MTITypeByte = [4]byte{0x30, 0x31, 0x31, 0x30}
-	MTIFinancialRequestByte        MTITypeByte = [4]byte{0x30, 0x32, 0x30, 0x30}
-	MTIFinancialResponseByte       MTITypeByte = [4]byte{0x30, 0x32, 0x31, 0x30}
-	MTIReversalRequestByte         MTITypeByte = [4]byte{0x30, 0x34, 0x30, 0x30}
-	MTIReversalResponseByte        MTITypeByte = [4]byte{0x30, 0x34, 0x31, 0x30}
-	MTIRepeatedReversalRequestByte MTITypeByte = [4]byte{0x30, 0x34, 0x30, 0x31}
-	MTINMMRequestByte              MTITypeByte = [4]byte{0x30, 0x38, 0x30, 0x30}
-	MTINMMResponseByte             MTITypeByte = [4]byte{0x30, 0x38, 0x31, 0x30}
+	MTICardProcessingRequestByte         MTITypeByte = [4]byte{0x30, 0x31, 0x30, 0x30}
+	MTICardProcessingResponseByte        MTITypeByte = [4]byte{0x30, 0x31, 0x31, 0x30}
+	MTIFinancialRequestByte              MTITypeByte = [4]byte{0x30, 0x32, 0x30, 0x30}
+	MTIFinancialResponseByte             MTITypeByte = [4]byte{0x30, 0x32, 0x31, 0x30}
+	MTIReversalRequestByte               MTITypeByte = [4]byte{0x30, 0x34, 0x30, 0x30}
+	MTIReversalRepeatedRequestByte       MTITypeByte = [4]byte{0x30, 0x34, 0x30, 0x31}
+	MTIReversalResponseByte              MTITypeByte = [4]byte{0x30, 0x34, 0x31, 0x30}
+	MTIReversalAdviceRequestByte         MTITypeByte = [4]byte{0x30, 0x34, 0x32, 0x30}
+	MTIReversalAdviceRepeatedRequestByte MTITypeByte = [4]byte{0x30, 0x34, 0x32, 0x31}
+	MTIReversalAdviceResponseByte        MTITypeByte = [4]byte{0x30, 0x34, 0x33, 0x30}
+	MTIRepeatedReversalRequestByte       MTITypeByte = [4]byte{0x30, 0x34, 0x30, 0x31}
+	MTINMMRequestByte                    MTITypeByte = [4]byte{0x30, 0x38, 0x30, 0x30}
+	MTINMMResponseByte                   MTITypeByte = [4]byte{0x30, 0x38, 0x31, 0x30}
 )
 
 // Pre-computed valid MTI lookup for O(1) validation
 var validMTIs = map[[4]byte]struct{}{
-	MTICardProcessingRequestByte:   {},
-	MTICardProcessingResponseByte:  {},
-	MTIFinancialRequestByte:        {},
-	MTIFinancialResponseByte:       {},
-	MTIReversalRequestByte:         {},
-	MTIReversalResponseByte:        {},
-	MTIRepeatedReversalRequestByte: {},
-	MTINMMRequestByte:              {},
-	MTINMMResponseByte:             {},
+	MTICardProcessingRequestByte:         {},
+	MTICardProcessingResponseByte:        {},
+	MTIFinancialRequestByte:              {},
+	MTIFinancialResponseByte:             {},
+	MTIReversalRequestByte:               {},
+	MTIReversalRepeatedRequestByte:       {},
+	MTIReversalResponseByte:              {},
+	MTIReversalAdviceRequestByte:         {},
+	MTIReversalAdviceRepeatedRequestByte: {},
+	MTIReversalAdviceResponseByte:        {},
+	MTIRepeatedReversalRequestByte:       {},
+	MTINMMRequestByte:                    {},
+	MTINMMResponseByte:                   {},
 }
 
 func (m MTITypeByte) ToMtiString() MTIType {
