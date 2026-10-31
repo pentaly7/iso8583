@@ -1,7 +1,7 @@
 package iso8583
 
 import (
-	"sync"
+	"strings"
 	"unsafe"
 )
 
@@ -12,16 +12,13 @@ var (
 	bitCounts      [256]int
 	fourDigitTable [10000][4]byte
 	hexTable       [256][2]byte
-	once           sync.Once
 )
 
 // init initializes lookup tables used for bit manipulation and data conversion.
 // It pre-calculates bit positions, bit counts, hexadecimal representations,
 // and four-digit decimal representations for improved performance.
 func init() {
-	once.Do(func() {
-		initLookupTables()
-	})
+	initLookupTables()
 }
 
 func initLookupTables() {
@@ -56,7 +53,6 @@ type (
 		isoMessageMap [129][]byte // Get Element of Iso Message in Map
 		activeBits    [129]int
 		activeCount   int
-		keyBuffer     [128]byte
 		packager      *IsoPackager
 		length        int
 		err           error
@@ -140,24 +136,23 @@ func (m *Message) HasBit(bit int) bool {
 
 // GetMessageKey is to Trace ISO Message created for Tracing ISO Message Respon
 func (m *Message) GetMessageKey() string {
-	// Build directly into pre-allocated buffer
-	pos := 0
+	var sb strings.Builder
 
+	sb.Grow(128)
 	// MTI (4 bytes)
 	if m.IsRequest() {
 		mtiRes, _ := m.GetMTIResponse()
-		pos += copy(m.keyBuffer[pos:], mtiRes[:])
+		sb.Write(mtiRes[:])
 	} else {
-		pos += copy(m.keyBuffer[pos:], m.MTI[:])
+		sb.Write(m.MTI[:])
 	}
 
 	// Key fields
 	for _, bitNum := range m.packager.MessageKey {
-		pos += copy(m.keyBuffer[pos:], m.isoMessageMap[bitNum])
+		sb.Write(m.isoMessageMap[bitNum])
 	}
 
-	// Convert to string (still allocates the string, but no intermediate buffers)
-	return unsafe.String(unsafe.SliceData(m.keyBuffer[:]), pos)
+	return sb.String()
 }
 
 func (m *Message) GetMTIResponse() (mti MTITypeByte, err error) {
@@ -254,6 +249,7 @@ func (m *Message) IsResponse() bool {
 // ClearEntries for clear all entries so this message can be reused
 func (m *Message) ClearEntries() {
 	m.MTI = EmptyMti
+	m.header = nil
 	for i := 0; i < m.activeCount; i++ {
 		m.isoMessageMap[m.activeBits[i]] = nil
 	}
@@ -261,30 +257,32 @@ func (m *Message) ClearEntries() {
 }
 
 // CreateResponseISO create response ISO Message
-func CreateResponseISO(i *Message, rc string) (*Message, error) {
+func CreateResponseISO(m *Message, rc string) (*Message, error) {
 	// create msg
-	msg := NewMessage(i.packager)
-	msg.MTI = i.MTI
-	for bit, v := range i.isoMessageMap {
+	out := NewMessage(m.packager)
+	out.MTI = m.MTI
+	out.header = m.header
+	for bit, v := range m.isoMessageMap {
 		if v != nil {
-			msg.SetByte(bit, v)
+			out.SetByte(bit, v)
 		}
 	}
-	err := msg.SetMTIResponse()
+	err := out.SetMTIResponse()
 	if err != nil {
 		return nil, err
 	}
-	msg.SetString(39, rc)
-	return msg, nil
+	out.SetString(39, rc)
+	return out, nil
 }
 
 func CloneMessage(m *Message) *Message {
-	msg := NewMessage(m.packager)
-	msg.MTI = m.MTI
+	out := NewMessage(m.packager)
+	out.MTI = m.MTI
+	out.header = m.header
 	for bit, v := range m.isoMessageMap {
 		if v != nil {
-			msg.SetByte(bit, v)
+			out.SetByte(bit, v)
 		}
 	}
-	return msg
+	return out
 }

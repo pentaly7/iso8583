@@ -2,11 +2,9 @@ package iso8583
 
 func DefaultPackager() *IsoPackager {
 	packager := &IsoPackager{
-		HasHeader:    false,
 		HeaderLength: 0,
 		MessageKey:   []int{2, 7, 11, 12, 13, 41, 37},
 		IsoPackagerConfig: [129]BitConfig{
-			1:   NewBitConfigFixed(true, BitTypeB, 16),
 			2:   NewBitConfigLLVar(true, BitTypeN, 19),
 			3:   NewBitConfigFixed(false, BitTypeANS, 6),
 			4:   NewBitConfigFixed(false, BitTypeANS, 12),

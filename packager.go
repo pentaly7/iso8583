@@ -7,10 +7,7 @@ import (
 	"strconv"
 )
 
-var isoHeader = []byte("ISO")
-
 type IsoPackager struct {
-	HasHeader         bool                 `json:"hasHeader"`
 	HeaderLength      int                  `json:"headerLength"`
 	MessageKey        []int                `json:"messageKey"`
 	PackagerConfig    map[string]BitConfig `json:"packagerConfig"` // from json

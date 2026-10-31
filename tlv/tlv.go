@@ -40,12 +40,13 @@ func New(data []byte) (*Data, error) {
 				if i >= len(data) {
 					return nil, fmt.Errorf("unexpected end while reading tag")
 				}
-				tag = append(tag, data[i])
+				b := data[i]
+				tag = append(tag, b)
 				i++
 				// 0x80 is 10000000 in binary
 				// use AND operator if the value is 00000000 then break
 				// we found the tag if its MSB = 0
-				if data[i]&0x80 == 0 {
+				if b&0x80 == 0 {
 					break
 				}
 			}

@@ -15,7 +15,7 @@ func (m *Message) PackISO() ([]byte, error) {
 	// count data len to correctly allocate memory
 	dataLength := 0
 
-	if m.packager.HasHeader {
+	if m.packager.HeaderLength > 0 {
 		dataLength += m.packager.HeaderLength
 	}
 
@@ -71,9 +71,8 @@ func (m *Message) processPackIso(bitmap [16]byte, dataLength int) ([]byte, error
 	pos := 0
 
 	// Header
-	if m.packager.HasHeader {
+	if m.packager.HeaderLength > 0 {
 		pos += copy(byteData[pos:], m.header)
-		// byteData = append(byteData, m.header...)
 	}
 
 	// MTI

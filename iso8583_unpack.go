@@ -1,7 +1,6 @@
 package iso8583
 
 import (
-	"bytes"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -18,6 +17,7 @@ func (m *Message) UnpackString(s string) error {
 
 // Unpack to Single Data Element
 func (m *Message) Unpack(b []byte) error {
+	m.ClearEntries()
 
 	cursor := 0
 
@@ -26,12 +26,9 @@ func (m *Message) Unpack(b []byte) error {
 	}
 	// check ISO header
 
-	if m.packager.HasHeader {
+	if m.packager.HeaderLength > 0 {
 		m.header = b[:m.packager.HeaderLength]
 		cursor += m.packager.HeaderLength
-	} else if bytes.Equal(b[:3], isoHeader) {
-		m.header = isoHeader
-		cursor += 3
 	}
 
 	if len(b[cursor:]) < 4 {
@@ -39,7 +36,7 @@ func (m *Message) Unpack(b []byte) error {
 	}
 
 	// check MTI
-	mti := MTITypeByte(b[0:4])
+	mti := MTITypeByte(b[cursor : cursor+4])
 	if !isValidMti(mti) {
 		return ErrNotDefaultMti
 	}

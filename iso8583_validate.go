@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"unsafe"
 )
 
 // ValidateMandatoryBits validate ISO Message
@@ -43,8 +44,11 @@ func (m *Message) ValidateMandatoryBits() error {
 
 func (m *Message) ValidateBitType() (err error) {
 	for bit, v := range m.isoMessageMap {
+		if bit == 0 {
+			continue
+		}
 		bitType := m.packager.IsoPackagerConfig[bit].Type
-		val := string(v)
+		val := unsafe.String(unsafe.SliceData(v), len(v))
 		switch bitType {
 		case BitTypeN:
 			if !reNumeric.MatchString(val) {
@@ -56,7 +60,7 @@ func (m *Message) ValidateBitType() (err error) {
 			}
 		case BitTypeANS:
 			// accept everything
-			return nil
+			continue
 		case BitTypeB:
 			_, errConv := hex.DecodeString(val)
 			if errConv != nil {

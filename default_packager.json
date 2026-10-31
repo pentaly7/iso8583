@@ -3,14 +3,6 @@
   "headerLength": 0,
   "messageKey": [2, 7, 11, 12, 13, 41, 37],
   "packagerConfig": {
-    "1": {
-      "isMandatory": true,
-      "type": "b",
-      "length": {
-        "type": "FIXED",
-        "max": 16
-      }
-    },
     "2": {
       "isMandatory": true,
       "type": "n",
