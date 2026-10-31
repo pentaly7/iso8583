@@ -77,6 +77,22 @@ func (m *Message) SetByte(bit int, value []byte) *Message {
 	return m
 }
 
+func (m *Message) SetHeader(value []byte) *Message {
+	if value == nil {
+		return m
+	}
+	m.header = value
+	return m
+}
+
+func (m *Message) SetHeaderString(value string) *Message {
+	if value == "" {
+		return m
+	}
+	m.header = []byte(value)
+	return m
+}
+
 func (m *Message) SetString(bit int, s string) *Message {
 	if m.isoMessageMap[bit] == nil { // only insert if new
 		m.appendBit(bit)

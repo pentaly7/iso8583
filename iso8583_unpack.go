@@ -21,11 +21,6 @@ func (m *Message) Unpack(b []byte) error {
 
 	cursor := 0
 
-	if len(b) < 4 {
-		return ErrInsufficientDataMti
-	}
-	// check ISO header
-
 	if m.packager.HeaderLength > 0 {
 		m.header = b[:m.packager.HeaderLength]
 		cursor += m.packager.HeaderLength
